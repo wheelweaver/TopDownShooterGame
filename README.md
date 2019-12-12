@@ -4,7 +4,7 @@ Game Design Final Project
 
 ## RUN
 To run game start main.py file.
-DOES NOT USE FLASHING BACKGROUND. DIDN'T REALIZE THE AFFECT IT CAN HAVE. 
+DOES NOT USE FLASHING BACKGROUND.<br/> DIDN'T REALIZE THE AFFECT IT CAN HAVE. 
 
 ## Main Python Files
 main.py - holds game information <br/>
