@@ -18,3 +18,7 @@ wallMap4.txt - Other <br/>
 ## Sound Files
 background.ogg - Background music while game in session <br/>
 laser.ogg - Laser sound when player shoots
+
+## Image & Sound Source
+Images and sound are from Kenny's top down shooter pack
+https://www.kenney.nl/assets/topdown-shooter
