@@ -8,26 +8,6 @@ vect = pygame.math.Vector2
 def collide_rect2(one, two):
     return one.collide_rect.colliderect(two.rect)
 
-def collide_with_walls(sprite, group, dir):
-    if dir == 'x':
-        hits = pygame.sprite.spritecollide(sprite, group, False, collide_rect2)
-        if hits:
-            if hits[0].rect.centerx > sprite.collide_rect.centerx:
-                sprite.pos.x = hits[0].rect.left - sprite.collide_rect.width / 2
-            if hits[0].rect.centerx < sprite.collide_rect.centerx:
-                sprite.pos.x = hits[0].rect.right + sprite.collide_rect.width / 2
-            sprite.vel.x = 0
-            sprite.collide_rect.centerx = sprite.pos.x
-    if dir == 'y':
-        hits = pygame.sprite.spritecollide(sprite, group, False, collide_rect2)
-        if hits:
-            if hits[0].rect.centery > sprite.collide_rect.centery:
-                sprite.pos.y = hits[0].rect.top - sprite.collide_rect.height / 2
-            if hits[0].rect.centery < sprite.collide_rect.centery:
-                sprite.pos.y = hits[0].rect.bottom + sprite.collide_rect.height / 2
-            sprite.vel.y = 0
-            sprite.collide_rect.centery = sprite.pos.y
-
 class Player(pygame.sprite.Sprite):
     def __init__(self, game, x, y):
         self.groups = game.all_sprites
@@ -122,9 +102,6 @@ class Player(pygame.sprite.Sprite):
         self.rect.center = self.collide_rect.center
 
 
-class Princess(Player):
-    pass
-
 class Enemy(pygame.sprite.Sprite):
     def __init__(self, game, x, y):
         self.groups = game.all_sprites, game.enemy
@@ -145,21 +122,6 @@ class Enemy(pygame.sprite.Sprite):
         self.speed = choice(ENEMY_SPEED)
         self.target = game.player
         self.last_shot = 0
-
-
-        '''
-        self.rect.center = (x, y)
-        self.collide_rect = ENEMY_RECTANGLE.copy()
-        self.collide_rect.center = self.rect.center
-        self.pos = vect(x, y) * TILESIZE
-        self.vel = vect(0, 0)
-        self.acc = vect(0, 0)
-        self.rect.center = self.pos
-        self.rot = 0
-        self.last_shot = 0
-        self.speed = choice(MOB_SPEEDS)
-        '''
-
 
     def update(self):
         target_distance = self.target.pos - self.pos
@@ -187,15 +149,6 @@ class Enemy(pygame.sprite.Sprite):
             self.wallCollisons('y')
             self.rect.center = self.collide_rect.center
         #else:
-
-        '''
-        self.hit_rect.centerx = self.pos.x
-        collide_with_walls(self, self.game.walls, 'x')
-        self.hit_rect.centery = self.pos.y
-        collide_with_walls(self, self.game.walls, 'y')
-        self.rect.center = self.hit_rect.center
-
-        '''
 
     def shoot(self):
         self.rot_speed = 0
@@ -230,58 +183,13 @@ class Enemy(pygame.sprite.Sprite):
                 self.collide_rect.centery = self.pos.y
 
     def avoidEnemyRadius(self):
+        # For each enemy in group, we get the diffrence betwence distance of all enemy and if within ENEMY_RADIUS
+        # we accelerate away from them
         for enemy in self.game.enemy:
             if enemy != self:
                 dist = self.pos - enemy.pos
                 if 0 < dist.length() < ENEMY_RADIUS:
                     self.acc += dist.normalize()
-
-'''
-    def update(self):
-        self.shoot()
-        self.rot = (self.game.player.pos - self.pos).angle_to(vect(1, 0))
-        self.image = pygame.transform.rotate(self.game.player_img, self.rot)
-        self.rect.center = self.pos
-
-        self.acc = vect(ENEMY_SPEED, 0).rotate(-self.rot)
-
-        #self.acc = vect(1, 0).rotate(-self.rot)
-        self.avoidEnemyRadius()
-        self.acc.scale_to_length(self.speed)
-        self.acc += self.vel * -1
-        self.vel += self.acc * self.game.dt
-        self.pos += self.vel * self.game.dt + 0.5 * self.acc * self.game.dt ** 2
-        self.collide_rect.centerx = self.pos.x
-        collide_with_walls(self, self.game.walls, 'x')
-        self.collide_rect.centery = self.pos.y
-        collide_with_walls(self, self.game.walls, 'y')
-        self.rect.center = self.collide_rect.center
-        # MY OLD ONE
-
-        self.rot = (self.game.player.pos - self.pos).angle_to(vect(1, 0))
-        self.image = pygame.transform.rotate(self.game.enemy_img, self.rot)
-        self.rect.center = self.pos
-        self.acc = vect(1, 0).rotate(-self.rot)
-        self.avoidEnemyRadius()
-        self.acc.scale_to_length(self.speed)
-        self.acc += self.vel * -1
-        self.vel += self.acc * self.game.dt
-        self.pos += self.vel * self.game.dt + 0.5 * self.acc * self.game.dt ** 2
-        self.collide_rect.centerx = self.pos.x
-
-        #self.rect.center = self.pos
-        #self.collide_rect.centerx = self.pos.x
-        self.wallCollisons('x')
-        #self.collide_rect.centery = self.pos.y
-        self.collide_rect.centery = self.pos.y
-        self.wallCollisons('y')
-        self.rect.center = self.collide_rect.center
-        '''
-
-class Princess(pygame.sprite.Sprite):
-    def __init__(self, game, x, y):
-        self.game = game
-        self.image = game.princess_image
 
 
 class Bullet2(pygame.sprite.Sprite):
@@ -299,38 +207,78 @@ class Bullet2(pygame.sprite.Sprite):
         self.bullet_time = pygame.time.get_ticks()
 
     def update(self):
+        # Position after shot
         self.pos += self.vel * self.game.dt
         self.rect.center = self.pos
+
+        # Kill bullet after it hits wall
         if pygame.sprite.spritecollideany(self, self.game.walls):
             self.kill()
+
+        # compares duration of bullet and if longer than enemy's last time then bullet is killed
         if pygame.time.get_ticks() - self.bullet_time > ENEMY_BULLET_LAST:
             self.kill()
 
 
 class Bullet(pygame.sprite.Sprite):
-    """docstring for bullet."""
+    """Bullet that player shoots. Hits Enemy.
+
+    Parameters
+    ----------
+    game : type
+        Description of parameter `game`.
+    pos : type
+        Description of parameter `pos`.
+    direction : type
+
+
+    """
     def __init__(self, game, pos, direction):
         self.groups = game.all_sprites, game.bullets
         pygame.sprite.Sprite.__init__(self, self.groups)
         self.game = game
         self.image = game.bullet_img
-        self.rect = self.image.get_rect()
+        self.rect = self.image.get_rect()  # Rectangle of image
         self.pos = vect(pos)
         self.rect.center = self.pos
         self.vel = direction * BULLET_SPEED
         self.bullet_time = pygame.time.get_ticks()
 
     def update(self):
-        self.pos +=  self.vel * self.game.dt
+        # Position after shot
+        self.pos +=  self.vel * self.game.dt  # Calculates the position
         self.rect.center = self.pos
+
+        # If bullet hits walls, then bullet is killed
         if pygame.sprite.spritecollideany(self, self.game.walls):
             self.kill()
-        # compares duration of bullet
+
+        # compares duration of bullet and if longer than last time then bullet is killed
         if pygame.time.get_ticks() - self.bullet_time > BULLET_LAST:
             self.kill()
 
 
 class Wall(pygame.sprite.Sprite):
+    """WAll INFORMATION.
+
+    Parameters
+    ----------
+    game : class
+        Description of parameter `passes the game class`.
+    x : type
+        Description of parameter `passes the row`.
+    y : type
+        Description of parameter `passes the column`.
+
+    Attributes
+    ----------
+    groups : type
+        Description of attribute `creates a wall group to store all the walls`.
+    image : type
+        Description of attribute `creates the the tile images.
+    rect : type
+        Description of attribute `makes a rectangle of the image`.
+    """
     def __init__(self, game, x, y):
         self.groups = game.all_sprites, game.walls
         pygame.sprite.Sprite.__init__(self, self.groups)
@@ -342,3 +290,11 @@ class Wall(pygame.sprite.Sprite):
         self.y = y
         self.rect.x = x * TILESIZE
         self.rect.y = y * TILESIZE
+##########################PRINCESS NOT USED##################################################
+'''
+class Princess(pygame.sprite.Sprite):
+    def __init__(self, game, x, y):
+        self.game = game
+        self.image = game.princess_image
+'''
+##############################################################################################
